@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Klett Vocabulary Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #24242f;
+    --accent: #7c6af7;
+    --accent2: #f7a26a;
+    --accent3: #6af7b8;
+    --text: #f0eeff;
+    --muted: #8888aa;
+    --correct: #4cdb8a;
+    --wrong: #f76a6a;
+    --border: rgba(124,106,247,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(124,106,247,0.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 680px;
+    position: relative;
+  }
+
+  /* ---- SCREENS ---- */
+  .screen { display: none; animation: fadeIn 0.35s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- HEADER ---- */
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 32px;
+    opacity: 0.8;
+  }
+
+  /* ---- HOME ---- */
+  .home-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .home-sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 40px;
+  }
+
+  /* ---- SECTION CARDS ---- */
+  .section-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 22px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-card:hover {
+    background: var(--surface2);
+    border-color: rgba(124,106,247,0.5);
+    transform: translateX(4px);
+  }
+  .section-card .sc-left { display: flex; flex-direction: column; gap: 4px; }
+  .section-card .sc-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .section-card .sc-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .section-card .sc-count {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .section-card .arrow {
+    color: var(--accent);
+    font-size: 20px;
+    opacity: 0.6;
+  }
+
+  /* ---- QUIZ SCREEN ---- */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .quiz-back {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quiz-back:hover { background: var(--surface2); }
+
+  .quiz-stats {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .stat-pill.correct-stat { color: var(--correct); border-color: rgba(76,219,138,0.3); }
+  .stat-pill.wrong-stat { color: var(--wrong); border-color: rgba(247,106,106,0.3); }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .quiz-section-label {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+  .question-num {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .question-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.2rem, 3vw, 1.6rem);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Multiple choice */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 480px) { .options-grid { grid-template-columns: 1fr; } }
+
+  .option-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: left;
+  }
+  .option-btn:hover:not(:disabled) {
+    background: var(--surface2);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .option-btn.correct {
+    background: rgba(76,219,138,0.15);
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+  .option-btn.wrong {
+    background: rgba(247,106,106,0.12);
+    border-color: var(--wrong);
+    color: var(--wrong);
+  }
+  .option-btn:disabled { cursor: default; }
+
+  /* Text input */
+  .text-input-wrap {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .text-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 200px;
+  }
+  .text-input:focus { border-color: var(--accent); }
+  .text-input.correct { border-color: var(--correct); background: rgba(76,219,138,0.1); }
+  .text-input.wrong { border-color: var(--wrong); background: rgba(247,106,106,0.08); }
+
+  .submit-btn {
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .submit-btn:hover { background: #9183f9; transform: translateY(-1px); }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+  }
+  .feedback.show { display: block; animation: fadeIn 0.2s; }
+  .feedback.correct { background: rgba(76,219,138,0.12); color: var(--correct); border: 1px solid rgba(76,219,138,0.3); }
+  .feedback.wrong { background: rgba(247,106,106,0.1); color: var(--wrong); border: 1px solid rgba(247,106,106,0.25); }
+
+  /* Next btn */
+  .next-btn {
+    width: 100%;
+    margin-top: 12px;
+    background: linear-gradient(135deg, var(--accent), #9183f9);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.2s;
+    letter-spacing: 0.04em;
+  }
+  .next-btn:hover { opacity: 0.9; }
+  .next-btn.show { display: block; animation: fadeIn 0.3s; }
+
+  /* ---- RESULT SCREEN ---- */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 32px;
+    text-align: center;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 16px; }
+  .result-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-sub { color: var(--muted); margin-bottom: 32px; }
+  .result-score {
+    font-family: 'Syne', sans-serif;
+    font-size: 4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 24px;
+  }
+  .result-details {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .result-detail { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .rd-num { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; }
+  .rd-label { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .rd-correct .rd-num { color: var(--correct); }
+  .rd-wrong .rd-num { color: var(--wrong); }
+
+  .restart-btn {
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 6px;
+    transition: all 0.2s;
+  }
+  .restart-btn:hover { background: #9183f9; }
+  .home-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 6px;
+    transition: all 0.2s;
+  }
+  .home-btn:hover { background: var(--surface); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="homeScreen">
+    <div class="logo">Klett · Vocabulary Quiz</div>
+    <div class="home-title">Ready to<br>Learn? 🎯</div>
+    <div class="home-sub">Choose a section to practice vocabulary</div>
+    <div class="section-grid" id="sectionGrid"></div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="screen" id="quizScreen">
+    <div class="quiz-header">
+      <button class="quiz-back" onclick="goHome()">← Back</button>
+      <div class="quiz-stats">
+        <span class="stat-pill correct-stat" id="correctCount">✓ 0</span>
+        <span class="stat-pill wrong-stat" id="wrongCount">✗ 0</span>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="quiz-section-label" id="quizSectionLabel"></div>
+    <div class="question-card">
+      <div class="question-num" id="questionNum"></div>
+      <div class="question-text" id="questionText"></div>
+    </div>
+    <div id="answersArea"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next →</button>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="resultScreen">
+    <div class="result-card">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <div class="result-title" id="resultTitle">Well done!</div>
+      <div class="result-sub" id="resultSub"></div>
+      <div class="result-score" id="resultScore">0%</div>
+      <div class="result-details">
+        <div class="result-detail rd-correct">
+          <div class="rd-num" id="finalCorrect">0</div>
+          <div class="rd-label">Correct</div>
+        </div>
+        <div class="result-detail rd-wrong">
+          <div class="rd-num" id="finalWrong">0</div>
+          <div class="rd-label">Wrong</div>
+        </div>
+        <div class="result-detail">
+          <div class="rd-num" id="finalTotal">0</div>
+          <div class="rd-label">Total</div>
+        </div>
+      </div>
+      <div>
+        <button class="restart-btn" onclick="restartQuiz()">Try Again</button>
+        <button class="home-btn" onclick="goHome()">All Sections</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+// ===================== VOCABULARY DATA =====================
+const SECTIONS = [
+  {
+    id: "ac1",
+    label: "Across Cultures 1",
+    name: "School Life",
+    color: "#7c6af7",
+    questions: [
+      {q:"hallway",a:"Flur / Korridor",type:"mc",wrong:["Labor","Nachsitzen","Schulleiter"]},
+      {q:"laboratory",a:"Labor",type:"mc",wrong:["Flur","Vorort","Nachsitzen"]},
+      {q:"to skip (class)",a:"den Unterricht schwänzen",type:"mc",wrong:["mogeln","suspendiert werden","auslassen"]},
+      {q:"to cheat",a:"mogeln / betrügen",type:"mc",wrong:["schwänzen","bestellen","verdienen"]},
+      {q:"to get caught",a:"erwischt werden",type:"mc",wrong:["verdienen","auslassen","bestellen"]},
+      {q:"principal (AE)",a:"Schulleiter/-in",type:"mc",wrong:["Laborant","Korridor","Ausschluss"]},
+      {q:"to be suspended",a:"zeitweilig vom Unterricht ausgeschlossen werden",type:"mc",wrong:["schwänzen","mogeln","versetzt werden"]},
+      {q:"detention",a:"Nachsitzen",type:"mc",wrong:["Labor","Schulleiter","Flur"]},
+      {q:"lunchtime",a:"Mittagspause",type:"mc",wrong:["Unterrichtsstunde","Nachsitzen","Schulausflug"]},
+      {q:"silence",a:"Stille / Schweigen",type:"mc",wrong:["Lärm","Jubel","Ruhe"]},
+      {q:"consequence",a:"Konsequenz / Folge",type:"mc",wrong:["Freiheit","Wahrheit","Stunde"]},
+      {q:"otherwise",a:"sonst",type:"mc",wrong:["trotzdem","obwohl","außerdem"]},
+      {q:"to deserve",a:"verdienen",type:"mc",wrong:["auslassen","bestrafen","handeln"]},
+      {q:"to stand in line (AE)",a:"Schlange stehen",type:"mc",wrong:["ausschalten","anstehen","bestellen"]},
+      {q:"hall pass",a:"Erlaubnis, sich auf dem Flur aufzuhalten",type:"mc",wrong:["Schulausflug","Stundenplan","Spickzettel"]},
+      {q:"to switch off",a:"ausschalten",type:"mc",wrong:["einschalten","schwänzen","auslassen"]},
+      {q:"to be about to do sth",a:"im Begriff sein, etw. zu tun",type:"mc",wrong:["etw. ablehnen","etw. beenden","etw. beginnen"]},
+      {q:"to fake",a:"vortäuschen / fälschen",type:"mc",wrong:["verdienen","auslassen","bestrafen"]},
+      {q:"cheat sheet",a:"Spickzettel",type:"mc",wrong:["Nachsitzen","Stundenplan","Schulausflug"]},
+      {q:"attitude",a:"Haltung / Einstellung",type:"mc",wrong:["Konsequenz","Stille","Labor"]},
+    ]
+  },
+  {
+    id: "u1checkin",
+    label: "Unit 1 · Check-in",
+    name: "Kids in America",
+    color: "#f7a26a",
+    questions: [
+      {q:"orientation",a:"Orientierung",type:"mc",wrong:["Vorort","Nachbarschaft","Überraschung"]},
+      {q:"neighborhood",a:"Nachbarschaft",type:"mc",wrong:["Vorort","Orientierung","Gemeinde"]},
+      {q:"surprising",a:"überraschend",type:"mc",wrong:["städtisch","altmodisch","unsicher"]},
+      {q:"urban",a:"städtisch",type:"mc",wrong:["ländlich","überraschend","modisch"]},
+      {q:"suburb",a:"Vorort",type:"mc",wrong:["Nachbarschaft","Stadtzentrum","Gemeinde"]},
+      {q:"suburban",a:"vorstädtisch",type:"mc",wrong:["städtisch","ländlich","international"]},
+    ]
+  },
+  {
+    id: "u1s1",
+    label: "Unit 1 · Station 1",
+    name: "Living here isn't bad",
+    color: "#6af7b8",
+    questions: [
+      {q:"floor",a:"Stockwerk",type:"mc",wrong:["Boden","Teppich","Balkon"]},
+      {q:"built-in closet",a:"Einbauschrank",type:"mc",wrong:["Treppenhaus","Vorgarten","Eingang"]},
+      {q:"front yard (AE)",a:"Vorgarten",type:"mc",wrong:["Hinterhof","Treppenhaus","Balkon"]},
+      {q:"backyard",a:"Garten / Hinterhof",type:"mc",wrong:["Vorgarten","Stockwerk","Einbauschrank"]},
+      {q:"store (AE)",a:"Laden / Geschäft",type:"mc",wrong:["Lager","Schaufenster","Toilette"]},
+      {q:"noisy",a:"laut",type:"mc",wrong:["leise","schwindelig","weit"]},
+      {q:"restroom (AE)",a:"Toilette",type:"mc",wrong:["Aufzug","Stockwerk","Laden"]},
+      {q:"competitive",a:"leistungsorientiert / konkurrierend",type:"mc",wrong:["kooperativ","kreativ","laut"]},
+      {q:"curfew",a:"Sperrstunde / Ausgangssperre",type:"mc",wrong:["Stundenplan","Aufzug","Nachbarschaft"]},
+      {q:"to be homesick",a:"Heimweh haben",type:"mc",wrong:["glücklich sein","Angst haben","krank sein"]},
+      {q:"in spite of",a:"trotz",type:"mc",wrong:["wegen","während","obwohl"]},
+      {q:"How about ...?",a:"Wie wäre es mit ...?",type:"mc",wrong:["Was denkst du?","Hast du Lust?","Weißt du ...?"]},
+      {q:"to meet up",a:"sich treffen",type:"mc",wrong:["aufhören","beginnen","warten"]},
+      {q:"downtown (AE)",a:"Stadtzentrum",type:"mc",wrong:["Vorort","Nachbarschaft","Einkaufszentrum"]},
+      {q:"to get used to sth",a:"sich an etw. gewöhnen",type:"mc",wrong:["etw. aufgeben","etw. lernen","etw. vergessen"]},
+      {q:"elevator (AE)",a:"Aufzug / Lift",type:"mc",wrong:["Treppe","Stockwerk","Flur"]},
+      {q:"luckily",a:"glücklicherweise",type:"mc",wrong:["leider","trotzdem","demnach"]},
+      {q:"I'm afraid ...",a:"Leider ...",type:"mc",wrong:["Glücklicherweise ...","Hoffentlich ...","Ehrlich gesagt ..."]},
+    ]
+  },
+  {
+    id: "u1s2",
+    label: "Unit 1 · Station 2",
+    name: "That's the worst thing to do!",
+    color: "#f76a9a",
+    questions: [
+      {q:"committee",a:"Komitee / Ausschuss",type:"mc",wrong:["Klasse","Gruppe","Mannschaft"]},
+      {q:"8th-grader (AE)",a:"Achtklässler/-in",type:"mc",wrong:["Schulleiter","Schüler","Lehrer"]},
+      {q:"in order to",a:"um ... zu / mit der Absicht",type:"mc",wrong:["weil","obwohl","während"]},
+      {q:"period (AE)",a:"Unterrichtsstunde",type:"mc",wrong:["Pause","Schuljahr","Semester"]},
+      {q:"geek",a:"Außenseiter/-in",type:"mc",wrong:["Klassenclown","Streber","Schüler"]},
+      {q:"dilemma",a:"Dilemma / Zwickmühle",type:"mc",wrong:["Konflikt","Lösung","Aufgabe"]},
+      {q:"mean",a:"gemein",type:"mc",wrong:["freundlich","klug","mutig"]},
+      {q:"child labor (AE)",a:"Kinderarbeit",type:"mc",wrong:["Hausaufgaben","Gruppenarbeit","Praktikum"]},
+      {q:"to keep in touch",a:"in Kontakt bleiben",type:"mc",wrong:["sich verabschieden","kennenlernen","streiten"]},
+      {q:"impression",a:"Eindruck",type:"mc",wrong:["Überraschung","Gefühl","Meinung"]},
+      {q:"messy",a:"unordentlich",type:"mc",wrong:["ordentlich","sauber","modern"]},
+      {q:"to find one's way around",a:"sich zurechtfinden",type:"mc",wrong:["sich verirren","suchen","ankommen"]},
+      {q:"to unpack",a:"auspacken",type:"mc",wrong:["einpacken","verladen","aufräumen"]},
+      {q:"to dislike",a:"nicht mögen",type:"mc",wrong:["lieben","bevorzugen","kennen"]},
+      {q:"to be crazy about",a:"verrückt sein nach / abfahren auf",type:"mc",wrong:["hassen","langweilen","egal finden"]},
+      {q:"insecure",a:"unsicher",type:"mc",wrong:["selbstbewusst","mutig","ängstlich"]},
+      {q:"mind",a:"Geist / Verstand",type:"mc",wrong:["Herz","Seele","Körper"]},
+    ]
+  },
+  {
+    id: "u1story",
+    label: "Unit 1 · Story",
+    name: "Nightmare at the mall!",
+    color: "#a26af7",
+    questions: [
+      {q:"nightmare",a:"Alptraum",type:"mc",wrong:["Traum","Fantasie","Gedanke"]},
+      {q:"believable",a:"glaubwürdig",type:"mc",wrong:["unglaublich","merkwürdig","überzeugend"]},
+      {q:"coincidence",a:"Zufall",type:"mc",wrong:["Absicht","Plan","Konsequenz"]},
+      {q:"amazed",a:"erstaunt / verblüfft",type:"mc",wrong:["traurig","wütend","langweilig"]},
+      {q:"cheer",a:"Jubel / Hurraruf",type:"mc",wrong:["Stille","Klage","Ruf"]},
+      {q:"dizzy",a:"schwindelig",type:"mc",wrong:["müde","krank","aufgeregt"]},
+      {q:"to escape from",a:"fliehen / entfliehen",type:"mc",wrong:["ankommen","eintreten","bleiben"]},
+      {q:"protester",a:"Demonstrant/-in",type:"mc",wrong:["Polizist","Zuschauer","Journalist"]},
+      {q:"troublemaker",a:"Unruhestifter/-in",type:"mc",wrong:["Helfer","Schüler","Leiter"]},
+      {q:"to arrest",a:"festnehmen / verhaften",type:"mc",wrong:["freilassen","verhören","beobachten"]},
+      {q:"prison",a:"Gefängnis",type:"mc",wrong:["Polizei","Gericht","Schule"]},
+      {q:"to leave sb alone",a:"jmdn. in Ruhe lassen",type:"mc",wrong:["helfen","begleiten","verfolgen"]},
+      {q:"obvious",a:"offensichtlich",type:"mc",wrong:["verborgen","unklar","verwirrend"]},
+      {q:"gap",a:"Lücke / Spalt",type:"mc",wrong:["Brücke","Tor","Eingang"]},
+      {q:"meeting point",a:"Treffpunkt",type:"mc",wrong:["Ausgang","Eingang","Haltestelle"]},
+      {q:"old-fashioned",a:"altmodisch",type:"mc",wrong:["modern","trendy","stylisch"]},
+      {q:"to donate",a:"spenden / stiften",type:"mc",wrong:["kaufen","nehmen","verdienen"]},
+      {q:"pound",a:"Pfund (Maßeinheit)",type:"mc",wrong:["Kilo","Liter","Meter"]},
+      {q:"homeless",a:"obdachlos",type:"mc",wrong:["reich","arm","krank"]},
+      {q:"donation",a:"Spende / Schenkung",type:"mc",wrong:["Steuer","Gehalt","Gebühr"]},
+    ]
+  },
+  {
+    id: "u1skills",
+    label: "Unit 1 · Skills",
+    name: "Improve your texts",
+    color: "#6ab8f7",
+    questions: [
+      {q:"suggestion",a:"Vorschlag / Anregung",type:"mc",wrong:["Forderung","Befehl","Frage"]},
+      {q:"to rise",a:"steigen / sich erheben",type:"mc",wrong:["fallen","bleiben","sinken"]},
+      {q:"twice",a:"zweimal",type:"mc",wrong:["einmal","dreimal","oft"]},
+      {q:"excitement",a:"Aufregung",type:"mc",wrong:["Langeweile","Ruhe","Freude"]},
+      {q:"unexpected",a:"unerwartet",type:"mc",wrong:["erwartet","bekannt","gewöhnlich"]},
+      {q:"truth",a:"Wahrheit",type:"mc",wrong:["Lüge","Geheimnis","Meinung"]},
+      {q:"thumb",a:"Daumen",type:"mc",wrong:["Finger","Hand","Faust"]},
+      {q:"no way",a:"auf keinen Fall / keineswegs",type:"mc",wrong:["natürlich","vielleicht","sicher"]},
+      {q:"factual",a:"sachlich / Sach-",type:"mc",wrong:["kreativ","mündlich","schriftlich"]},
+      {q:"changing room",a:"Umkleideraum",type:"mc",wrong:["Badezimmer","Küche","Büro"]},
+      {q:"by mistake",a:"versehentlich",type:"mc",wrong:["absichtlich","glücklicherweise","demnach"]},
+      {q:"logical",a:"logisch",type:"mc",wrong:["kreativ","chaotisch","verwirrend"]},
+    ]
+  },
+  {
+    id: "f1a",
+    label: "Focus 1 · Part A",
+    name: "Beginnings of the US",
+    color: "#f7e26a",
+    questions: [
+      {q:"general",a:"General",type:"mc",wrong:["Soldat","König","Präsident"]},
+      {q:"revolutionary",a:"revolutionär",type:"mc",wrong:["konservativ","modern","traditionell"]},
+      {q:"peak",a:"Haupt- / Spitzen-",type:"mc",wrong:["Grundlagen","Ende","Basis"]},
+      {q:"immigration",a:"Immigration / Einwanderung",type:"mc",wrong:["Auswanderung","Reise","Flucht"]},
+      {q:"a total of",a:"insgesamt",type:"mc",wrong:["mindestens","meistens","manchmal"]},
+      {q:"to represent",a:"repräsentieren / stehen für",type:"mc",wrong:["verbergen","ignorieren","beobachten"]},
+      {q:"covered wagon",a:"Planwagen",type:"mc",wrong:["Zug","Schiff","Pferdewagen"]},
+      {q:"ancestor",a:"Vorfahr/-in",type:"mc",wrong:["Nachkomme","Verwandter","Bekannter"]},
+      {q:"stranger",a:"Fremde/-r",type:"mc",wrong:["Freund","Nachbar","Verwandter"]},
+      {q:"parliament",a:"Parlament",type:"mc",wrong:["Regierung","Gericht","Polizei"]},
+      {q:"act",a:"Gesetz",type:"mc",wrong:["Regel","Beschluss","Vertrag"]},
+      {q:"colonist",a:"Siedler/-in / Kolonist/-in",type:"mc",wrong:["Einwanderer","Flüchtling","Händler"]},
+      {q:"tax",a:"Steuer / Abgabe",type:"mc",wrong:["Lohn","Gebühr","Strafe"]},
+      {q:"to demand",a:"fordern / verlangen",type:"mc",wrong:["bitten","anbieten","empfehlen"]},
+    ]
+  },
+  {
+    id: "f1b",
+    label: "Focus 1 · Part B",
+    name: "Rights & Revolution",
+    color: "#f76a6a",
+    questions: [
+      {q:"assembly",a:"Versammlung",type:"mc",wrong:["Gericht","Parlament","Gemeinde"]},
+      {q:"smuggler",a:"Schmuggler/-in",type:"mc",wrong:["Händler","Polizist","Soldat"]},
+      {q:"declaration",a:"Erklärung / Feststellung",type:"mc",wrong:["Gesetz","Vertrag","Brief"]},
+      {q:"document",a:"Dokument",type:"mc",wrong:["Zeitung","Brief","Gesetz"]},
+      {q:"value",a:"Wert",type:"mc",wrong:["Preis","Menge","Bedeutung"]},
+      {q:"happiness",a:"Glück / Zufriedenheit",type:"mc",wrong:["Trauer","Wut","Angst"]},
+      {q:"to punish",a:"bestrafen",type:"mc",wrong:["belohnen","loben","helfen"]},
+      {q:"port",a:"Hafen / Hafenstadt",type:"mc",wrong:["Flughafen","Grenze","Handelsplatz"]},
+      {q:"stamp",a:"Stempel",type:"mc",wrong:["Münze","Briefmarke","Schild"]},
+      {q:"to insist on",a:"insistieren / bestehen auf",type:"mc",wrong:["ablehnen","aufgeben","beenden"]},
+      {q:"to protest",a:"protestieren",type:"mc",wrong:["zustimmen","akzeptieren","schützen"]},
+      {q:"control",a:"Kontrolle",type:"mc",wrong:["Freiheit","Macht","Gesetz"]},
+      {q:"governor",a:"Gouverneur/-in",type:"mc",wrong:["Präsident","General","Bürgermeister"]},
+      {q:"to elect sb",a:"jmdn. wählen",type:"mc",wrong:["ernennen","ablösen","entlassen"]},
+      {q:"belief",a:"Glaube / Überzeugung",type:"mc",wrong:["Wissen","Meinung","Gefühl"]},
+      {q:"pioneer",a:"Pionier/-in",type:"mc",wrong:["Händler","Soldat","General"]},
+      {q:"spirit",a:"Geist / Stimmung",type:"mc",wrong:["Körper","Energie","Kraft"]},
+      {q:"to shape",a:"formen",type:"mc",wrong:["zerstören","verändern","bauen"]},
+      {q:"stripe",a:"Streifen",type:"mc",wrong:["Stern","Muster","Farbe"]},
+      {q:"original",a:"original / ursprünglich",type:"mc",wrong:["gefälscht","modern","kopiert"]},
+      {q:"development",a:"Entwicklung",type:"mc",wrong:["Beginn","Ende","Fortschritt"]},
+      {q:"to have sth in common",a:"etw. gemeinsam haben",type:"mc",wrong:["teilen","tauschen","trennen"]},
+    ]
+  },
+  {
+    id: "ts1",
+    label: "Text Smart 1",
+    name: "Internet Texts",
+    color: "#6af7e2",
+    questions: [
+      {q:"reliable",a:"verlässlich / zuverlässig",type:"mc",wrong:["unzuverlässig","gefährlich","unbekannt"]},
+      {q:"tutorial",a:"Anleitung / Tutorial",type:"mc",wrong:["Bericht","Übung","Erklärung"]},
+      {q:"invention",a:"Erfindung",type:"mc",wrong:["Entdeckung","Innovation","Produkt"]},
+      {q:"moon landing",a:"Mondlandung",type:"mc",wrong:["Raumfahrt","Satellit","Rakete"]},
+      {q:"achievement",a:"Leistung / Errungenschaft",type:"mc",wrong:["Fehler","Ziel","Aufgabe"]},
+      {q:"advantage",a:"Vorteil",type:"mc",wrong:["Nachteil","Unterschied","Eigenschaft"]},
+      {q:"wealth",a:"Reichtum / Vermögen",type:"mc",wrong:["Armut","Besitz","Gehalt"]},
+      {q:"to provide",a:"liefern / bereitstellen",type:"mc",wrong:["nehmen","kaufen","verlangen"]},
+      {q:"hunger",a:"Hunger",type:"mc",wrong:["Durst","Kälte","Müdigkeit"]},
+      {q:"scientist",a:"Wissenschaftler/-in",type:"mc",wrong:["Techniker","Erfinder","Doktor"]},
+      {q:"engineer",a:"Ingenieur/-in",type:"mc",wrong:["Wissenschaftler","Techniker","Mechaniker"]},
+      {q:"inventor",a:"Erfinder/-in",type:"mc",wrong:["Ingenieur","Wissenschaftler","Entdecker"]},
+      {q:"wiki",a:"Website mit Sammlung von Beiträgen",type:"mc",wrong:["Blog","Forum","Zeitung"]},
+      {q:"mission",a:"Mission / Auftrag",type:"mc",wrong:["Reise","Aufgabe","Plan"]},
+      {q:"astronaut",a:"Astronaut/-in",type:"mc",wrong:["Pilot","Kosmonaut","Forscher"]},
+      {q:"lunar",a:"Mond-",type:"mc",wrong:["Solar-","Planeten-","Galaxis-"]},
+      {q:"module",a:"Modul / Element",type:"mc",wrong:["Teil","Einheit","Block"]},
+      {q:"giant",a:"Riesen- / riesig",type:"mc",wrong:["winzig","klein","groß"]},
+      {q:"leap",a:"Sprung / Satz",type:"mc",wrong:["Schritt","Sprung","Fall"]},
+      {q:"command",a:"Befehl",type:"mc",wrong:["Bitte","Frage","Rat"]},
+      {q:"crew",a:"Crew / Besatzung",type:"mc",wrong:["Mannschaft","Gruppe","Team"]},
+      {q:"garbage (AE)",a:"Müll / Abfall",type:"mc",wrong:["Dreck","Recycling","Kompost"]},
+      {q:"to admit",a:"zugeben",type:"mc",wrong:["leugnen","verbergen","behaupten"]},
+      {q:"barn",a:"Scheune",type:"mc",wrong:["Stall","Schuppen","Hütte"]},
+      {q:"tooth / teeth",a:"Zahn / Zähne",type:"mc",wrong:["Lippe","Kiefer","Mund"]},
+      {q:"creature",a:"Kreatur / Lebewesen",type:"mc",wrong:["Tier","Pflanze","Mensch"]},
+      {q:"journalist",a:"Journalist/-in",type:"mc",wrong:["Autor","Reporter","Moderator"]},
+      {q:"statistics",a:"Statistik",type:"mc",wrong:["Mathematik","Daten","Tabelle"]},
+      {q:"exaggeration",a:"Übertreibung",type:"mc",wrong:["Untertreibung","Beschreibung","Erklärung"]},
+      {q:"convincing",a:"überzeugend",type:"mc",wrong:["glaubwürdig","ehrlich","bescheiden"]},
+      {q:"informative",a:"informativ",type:"mc",wrong:["kreativ","lehrreich","unterhaltsam"]},
+      {q:"to be based on",a:"basieren auf",type:"mc",wrong:["abhängen von","handeln über","stammen aus"]},
+      {q:"hoax",a:"Täuschung / Trick",type:"mc",wrong:["Lüge","Verschwörung","Illusion"]},
+      {q:"to claim",a:"behaupten / beanspruchen",type:"mc",wrong:["zugeben","fragen","zweifeln"]},
+      {q:"to entertain",a:"unterhalten",type:"mc",wrong:["informieren","inspirieren","belehren"]},
+    ]
+  },
+  {
+    id: "u2checkin",
+    label: "Unit 2 · Check-in",
+    name: "The Pacific Northwest",
+    color: "#f7a26a",
+    questions: [
+      {q:"to argue",a:"argumentieren / streiten",type:"mc",wrong:["zustimmen","diskutieren","besprechen"]},
+      {q:"population",a:"Bevölkerung",type:"mc",wrong:["Gemeinde","Gesellschaft","Einwohner"]},
+      {q:"boomtown",a:"Stadt mit starkem Wirtschaftswachstum",type:"mc",wrong:["Großstadt","Hauptstadt","Industriestadt"]},
+      {q:"orca",a:"Schwertwal",type:"mc",wrong:["Delfin","Wal","Blauwal"]},
+      {q:"whale",a:"Wal",type:"mc",wrong:["Delfin","Hai","Schwertwal"]},
+      {q:"volcano",a:"Vulkan",type:"mc",wrong:["Berg","Hügel","Gebirge"]},
+      {q:"growth",a:"Wachstum",type:"mc",wrong:["Rückgang","Entwicklung","Fortschritt"]},
+      {q:"total",a:"gesamt",type:"mc",wrong:["teilweise","einzeln","ungefähr"]},
+      {q:"employee",a:"Angestellte/-r",type:"mc",wrong:["Arbeitgeber","Chef","Manager"]},
+      {q:"carpet",a:"Teppich",type:"mc",wrong:["Vorleger","Boden","Matte"]},
+      {q:"allowance (AE)",a:"Taschengeld",type:"mc",wrong:["Gehalt","Belohnung","Preisgeld"]},
+      {q:"to obey",a:"gehorchen",type:"mc",wrong:["befehlen","widersprechen","ablehnen"]},
+      {q:"preference",a:"Vorliebe",type:"mc",wrong:["Abneigung","Meinung","Interesse"]},
+      {q:"issue",a:"Angelegenheit / Problem / Frage",type:"mc",wrong:["Lösung","Thema","Aufgabe"]},
+      {q:"guest",a:"Gast",type:"mc",wrong:["Besucher","Freund","Gast"]},
+      {q:"simple",a:"einfach / simpel",type:"mc",wrong:["schwierig","kompliziert","komplex"]},
+      {q:"staircase",a:"Treppenhaus",type:"mc",wrong:["Aufzug","Eingang","Flur"]},
+      {q:"balcony",a:"Balkon",type:"mc",wrong:["Terrasse","Treppenhaus","Dach"]},
+      {q:"to open to",a:"führen zu/in",type:"mc",wrong:["schließen","begrenzen","trennen"]},
+    ]
+  },
+  {
+    id: "u2s1",
+    label: "Unit 2 · Station 1",
+    name: "You've got no soul!",
+    color: "#6af7c8",
+    questions: [
+      {q:"killjoy",a:"Spielverderber/-in",type:"mc",wrong:["Witzbold","Stimmungsmacher","Freudenbringer"]},
+      {q:"to spot",a:"entdecken / erkennen",type:"mc",wrong:["suchen","verlieren","ignorieren"]},
+      {q:"reflection",a:"Spiegelung / Reflexion",type:"mc",wrong:["Schatten","Bild","Licht"]},
+      {q:"calm",a:"Ruhe",type:"mc",wrong:["Lärm","Aufregung","Stimmung"]},
+      {q:"driver's license (AE)",a:"Führerschein",type:"mc",wrong:["Ausweis","Reisepass","Fahrkarte"]},
+      {q:"Canadian",a:"kanadisch",type:"mc",wrong:["amerikanisch","britisch","australisch"]},
+      {q:"the other day",a:"neulich",type:"mc",wrong:["gestern","früher","damals"]},
+      {q:"totally",a:"völlig / total",type:"mc",wrong:["etwas","kaum","selten"]},
+      {q:"my kind of",a:"nach meinem Geschmack",type:"mc",wrong:["meiner Meinung nach","für mich","meine Sorte"]},
+      {q:"institution",a:"Einrichtung / Organisation",type:"mc",wrong:["Behörde","Abteilung","Gruppe"]},
+      {q:"means of transport",a:"Verkehrsmittel",type:"mc",wrong:["Strecke","Reise","Fahrt"]},
+      {q:"kind of",a:"ziemlich / irgendwie",type:"mc",wrong:["sehr","gar nicht","absolut"]},
+      {q:"to be in a hurry",a:"es eilig haben",type:"mc",wrong:["Zeit haben","warten","entspannt sein"]},
+      {q:"waiter",a:"Kellner/-in",type:"mc",wrong:["Koch","Barkeeper","Manager"]},
+      {q:"It's my treat.",a:"Das geht auf meine Rechnung.",type:"mc",wrong:["Das ist eine Überraschung.","Das ist meine Pflicht.","Das ist ein Geschenk."]},
+      {q:"deal",a:"Abmachung / Übererinkunft",type:"mc",wrong:["Streit","Angebot","Preis"]},
+      {q:"retail",a:"Einzelhandel",type:"mc",wrong:["Großhandel","Online-Handel","Markt"]},
+      {q:"economy",a:"Ökonomie / Wirtschaft",type:"mc",wrong:["Politik","Gesellschaft","Industrie"]},
+      {q:"disadvantage",a:"Nachteil",type:"mc",wrong:["Vorteil","Merkmal","Problem"]},
+      {q:"waterfront",a:"Hafenviertel / Ufer",type:"mc",wrong:["Stadtzentrum","Vorort","Strand"]},
+    ]
+  },
+  {
+    id: "u2s2",
+    label: "Unit 2 · Station 2",
+    name: "Native Americans in the Northwest",
+    color: "#a26af7",
+    questions: [
+      {q:"income",a:"Einkommen",type:"mc",wrong:["Ausgaben","Steuern","Gehalt"]},
+      {q:"to be likely",a:"wahrscheinlich sein",type:"mc",wrong:["unwahrscheinlich sein","sicher sein","möglich sein"]},
+      {q:"average",a:"Durchschnitt",type:"mc",wrong:["Maximum","Minimum","Summe"]},
+      {q:"to get by",a:"auskommen / über die Runden kommen",type:"mc",wrong:["erfolgreich sein","aufgeben","vorbeikommen"]},
+      {q:"considerable",a:"beträchtlich",type:"mc",wrong:["gering","gewöhnlich","minimal"]},
+      {q:"college degree",a:"Hochschulabschluss",type:"mc",wrong:["Abitur","Diplom","Zertifikat"]},
+      {q:"blind",a:"blind",type:"mc",wrong:["taub","stumm","sehbehindert"]},
+      {q:"college fees",a:"Studiengebühren",type:"mc",wrong:["Schulgebühren","Steuern","Beiträge"]},
+      {q:"loose",a:"lose / locker / frei",type:"mc",wrong:["eng","fest","straff"]},
+      {q:"reserve (CE)",a:"Reservat",type:"mc",wrong:["Naturschutzgebiet","Nationalpark","Territorium"]},
+      {q:"root",a:"Wurzel",type:"mc",wrong:["Stamm","Ast","Zweig"]},
+      {q:"transportation (AE)",a:"Transport",type:"mc",wrong:["Verkehr","Reise","Fahrt"]},
+      {q:"to gather",a:"sammeln / sich versammeln",type:"mc",wrong:["teilen","suchen","finden"]},
+      {q:"salmon",a:"Lachs",type:"mc",wrong:["Forelle","Thunfisch","Hering"]},
+      {q:"spiritual",a:"spirituell / geistig",type:"mc",wrong:["körperlich","materiell","religiös"]},
+      {q:"painting",a:"Malerei / Gemälde",type:"mc",wrong:["Skulptur","Zeichnung","Foto"]},
+      {q:"sculpture",a:"Skulptur",type:"mc",wrong:["Gemälde","Kunstwerk","Figur"]},
+      {q:"resource",a:"Ressource",type:"mc",wrong:["Vorrat","Material","Rohstoff"]},
+      {q:"to destroy",a:"zerstören",type:"mc",wrong:["aufbauen","schützen","erhalten"]},
+      {q:"treaty",a:"Vertrag",type:"mc",wrong:["Gesetz","Erklärung","Abkommen"]},
+      {q:"to respect",a:"respektieren",type:"mc",wrong:["ignorieren","verachten","ablehnen"]},
+      {q:"lawyer",a:"Anwalt / Anwältin",type:"mc",wrong:["Richter","Polizist","Staatsanwalt"]},
+      {q:"dam",a:"Damm / Staumauer",type:"mc",wrong:["Brücke","Staudamm","Wall"]},
+      {q:"timber",a:"Holz / Bauholz",type:"mc",wrong:["Stahl","Stein","Beton"]},
+      {q:"ceremony",a:"Zeremonie",type:"mc",wrong:["Feier","Ritual","Fest"]},
+    ]
+  },
+  {
+    id: "u2story",
+    label: "Unit 2 · Story",
+    name: "Part-Time Indian",
+    color: "#f76a6a",
+    questions: [
+      {q:"absolutely",a:"absolut / völlig",type:"mc",wrong:["teilweise","kaum","selten"]},
+      {q:"part-time",a:"Teilzeit-",type:"mc",wrong:["Vollzeit-","Gelegenheits-","Halbtags-"]},
+      {q:"tough",a:"hart / rau / zäh",type:"mc",wrong:["weich","einfach","sanft"]},
+      {q:"black eye",a:"blaues Auge",type:"mc",wrong:["Wunde","Narbe","Verletzung"]},
+      {q:"to surround",a:"umgeben / umringen",type:"mc",wrong:["verlassen","schützen","beobachten"]},
+      {q:"to shave",a:"(sich) rasieren",type:"mc",wrong:["kämmen","waschen","schminken"]},
+      {q:"gift",a:"Geschenk / Gabe",type:"mc",wrong:["Talent","Preis","Belohnung"]},
+      {q:"racist",a:"rassistisch / Rassist/-in",type:"mc",wrong:["diskriminierend","voreingenommen","intolerant"]},
+      {q:"looks (pl)",a:"Aussehen",type:"mc",wrong:["Persönlichkeit","Charakter","Haltung"]},
+      {q:"to struggle",a:"kämpfen / Mühe haben",type:"mc",wrong:["aufgeben","siegen","gewinnen"]},
+      {q:"major",a:"wichtig / bedeutend",type:"mc",wrong:["unbedeutend","klein","unwichtig"]},
+      {q:"highway (AE)",a:"Bundesautobahn / Highway",type:"mc",wrong:["Landstraße","Autobahn","Stadtstraße"]},
+      {q:"to figure",a:"sich vorstellen / glauben",type:"mc",wrong:["wissen","sehen","hören"]},
+      {q:"to belong",a:"dazugehören",type:"mc",wrong:["verlassen","trennen","ausschließen"]},
+      {q:"illness",a:"Krankheit",type:"mc",wrong:["Verletzung","Behinderung","Schmerz"]},
+      {q:"to make fun of",a:"sich lustig machen über",type:"mc",wrong:["loben","bewundern","respektieren"]},
+      {q:"one day",a:"eines Tages",type:"mc",wrong:["gestern","damals","früher"]},
+    ]
+  },
+  {
+    id: "u2skills",
+    label: "Unit 2 · Skills",
+    name: "Argue a point",
+    color: "#6af7a2",
+    questions: [
+      {q:"used to (+ infinitive)",a:"pflegte zu / tat früher",type:"mc",wrong:["gewohnt sein","müssen","können"]},
+      {q:"to punch",a:"mit der Faust schlagen",type:"mc",wrong:["treten","stoßen","schlagen"]},
+      {q:"brain(s)",a:"Gehirn / Verstand",type:"mc",wrong:["Kopf","Gedanken","Geist"]},
+      {q:"superhero",a:"Superheld",type:"mc",wrong:["Held","Star","Champion"]},
+      {q:"individual",a:"Einzelperson / Individuum",type:"mc",wrong:["Gemeinschaft","Gruppe","Gesellschaft"]},
+      {q:"community",a:"Gemeinde / Gemeinschaft",type:"mc",wrong:["Gesellschaft","Gruppe","Nation"]},
+      {q:"strength",a:"Stärke / Kraft",type:"mc",wrong:["Schwäche","Energie","Ausdauer"]},
+      {q:"eruption",a:"Ausbruch (Vulkan)",type:"mc",wrong:["Explosion","Eruption","Detonation"]},
+      {q:"nearby",a:"in der Nähe",type:"mc",wrong:["weit weg","dort drüben","irgendwo"]},
+      {q:"to over-exaggerate",a:"völlig übertreiben",type:"mc",wrong:["untertreiben","betonen","beschreiben"]},
+      {q:"unless",a:"es sei denn, dass ...",type:"mc",wrong:["wenn","obwohl","weil"]},
+      {q:"to relate to",a:"eine Beziehung finden zu",type:"mc",wrong:["ignorieren","ablehnen","vermeiden"]},
+      {q:"standard of living",a:"Lebensstandard",type:"mc",wrong:["Lebensqualität","Wohlstand","Zufriedenheit"]},
+      {q:"ideally",a:"idealerweise",type:"mc",wrong:["realistisch gesehen","normalerweise","gewöhnlich"]},
+    ]
+  },
+  {
+    id: "f2",
+    label: "Focus 2",
+    name: "From Sea to Shining Sea",
+    color: "#f7d36a",
+    questions: [
+      {q:"frontier",a:"Grenze",type:"mc",wrong:["Territorium","Region","Zone"]},
+      {q:"territory",a:"Gebiet / Territorium",type:"mc",wrong:["Land","Staat","Bezirk"]},
+      {q:"to double",a:"verdoppeln",type:"mc",wrong:["halbieren","vervielfachen","verringern"]},
+      {q:"purchase",a:"Kauf / Erwerb",type:"mc",wrong:["Verkauf","Tausch","Handel"]},
+      {q:"to secure",a:"sichern",type:"mc",wrong:["verlieren","riskieren","aufgeben"]},
+      {q:"expedition",a:"Expedition / Forschungsreise",type:"mc",wrong:["Reise","Ausflug","Tour"]},
+      {q:"valuable",a:"wertvoll",type:"mc",wrong:["wertlos","billig","gewöhnlich"]},
+      {q:"to force",a:"zwingen",type:"mc",wrong:["bitten","erlauben","anbieten"]},
+      {q:"homeland",a:"Heimat / Heimatland",type:"mc",wrong:["Ausland","Vaterland","Heimatstadt"]},
+      {q:"warpath",a:"Kriegspfad",type:"mc",wrong:["Flucht","Frieden","Verteidigung"]},
+      {q:"attack",a:"Angriff / Überfall",type:"mc",wrong:["Verteidigung","Rückzug","Widerstand"]},
+      {q:"communications network",a:"Kommunikationsnetz",type:"mc",wrong:["Straßennetz","Bahnnetz","Stromnetz"]},
+      {q:"in time",a:"rechtzeitig",type:"mc",wrong:["pünktlich","frühzeitig","sofort"]},
+      {q:"to migrate",a:"wandern / umherziehen",type:"mc",wrong:["bleiben","siedeln","ansiedeln"]},
+      {q:"discovery",a:"Entdeckung",type:"mc",wrong:["Erfindung","Forschung","Suche"]},
+      {q:"mass migration",a:"Massenwanderung",type:"mc",wrong:["Einzelwanderung","Flucht","Deportation"]},
+      {q:"advertisement",a:"Anzeige / Werbespot",type:"mc",wrong:["Inserat","Plakat","Broschüre"]},
+      {q:"innovative",a:"innovativ / kreativ",type:"mc",wrong:["traditionell","konservativ","altmodisch"]},
+      {q:"to appear",a:"auftauchen / erscheinen",type:"mc",wrong:["verschwinden","verbergen","weggehen"]},
+      {q:"skinny",a:"dünn / mager",type:"mc",wrong:["dick","groß","kräftig"]},
+      {q:"to risk",a:"riskieren",type:"mc",wrong:["sichern","schützen","vermeiden"]},
+      {q:"innovation",a:"Innovation / Neuerung",type:"mc",wrong:["Erfindung","Entwicklung","Verbesserung"]},
+      {q:"telegraph",a:"Telegraf",type:"mc",wrong:["Telefon","Radio","Fax"]},
+      {q:"railroad (AE)",a:"Eisenbahn",type:"mc",wrong:["Straßenbahn","U-Bahn","Monorail"]},
+      {q:"locomotive",a:"Lokomotive",type:"mc",wrong:["Waggon","Zug","Triebwagen"]},
+      {q:"steam",a:"Dampf",type:"mc",wrong:["Rauch","Gas","Luft"]},
+      {q:"track",a:"Gleis / Schiene",type:"mc",wrong:["Weg","Pfad","Straße"]},
+    ]
+  },
+  {
+    id: "ac2",
+    label: "Across Cultures 2",
+    name: "At home with an American family",
+    color: "#f76a9a",
+    questions: [
+      {q:"household",a:"Haushalt",type:"mc",wrong:["Familie","Gemeinde","Gemeinschaft"]},
+      {q:"chore",a:"lästige Pflicht / Bürde",type:"mc",wrong:["Aufgabe","Pflicht","Arbeit"]},
+      {q:"to do the dishes",a:"den Abwasch machen",type:"mc",wrong:["Wäsche waschen","aufräumen","kochen"]},
+      {q:"to vacuum",a:"staubsaugen",type:"mc",wrong:["wischen","schrubben","polieren"]},
+      {q:"to load",a:"einräumen / laden",type:"mc",wrong:["ausräumen","entleeren","einpacken"]},
+      {q:"to empty",a:"leeren / ausräumen",type:"mc",wrong:["füllen","einräumen","laden"]},
+      {q:"dishwasher",a:"Spülmaschine",type:"mc",wrong:["Waschmaschine","Trockner","Geschirrspüler"]},
+      {q:"rug",a:"Vorleger / Teppich",type:"mc",wrong:["Matte","Decke","Läufer"]},
+      {q:"rating",a:"Bewertung / Einstufung",type:"mc",wrong:["Meinung","Kommentar","Kritik"]},
+      {q:"to rate",a:"bewerten / einstufen",type:"mc",wrong:["beurteilen","empfehlen","kritisieren"]},
+      {q:"exploration",a:"Erforschung / Erkundung",type:"mc",wrong:["Entdeckung","Reise","Expedition"]},
+      {q:"overall",a:"insgesamt",type:"mc",wrong:["hauptsächlich","teilweise","normalerweise"]},
+      {q:"well-written",a:"gut geschrieben",type:"mc",wrong:["schlecht geschrieben","kreativ","originell"]},
+      {q:"disappointing",a:"enttäuschend",type:"mc",wrong:["begeisternd","überraschend","beeindruckend"]},
+      {q:"breathtaking",a:"atemberaubend",type:"mc",wrong:["langweilig","schön","faszinierend"]},
+      {q:"combination",a:"Kombination / Verbindung",type:"mc",wrong:["Trennung","Mischung","Zusammenfassung"]},
+      {q:"performance",a:"Aufführung / Vorstellung",type:"mc",wrong:["Auftritt","Show","Konzert"]},
+      {q:"emotion",a:"Gefühl / Emotion",type:"mc",wrong:["Stimmung","Gedanke","Reaktion"]},
+      {q:"excellent",a:"exzellent / hervorragend",type:"mc",wrong:["gut","ausgezeichnet","super"]},
+      {q:"special effect",a:"Spezialeffekt",type:"mc",wrong:["Trick","Technik","Grafik"]},
+      {q:"badly-written",a:"schlecht geschrieben",type:"mc",wrong:["langweilig","verwirrend","unklar"]},
+      {q:"recently",a:"kürzlich / neulich",type:"mc",wrong:["früher","damals","zuletzt"]},
+    ]
+  },
+  {
+    id: "u3checkin",
+    label: "Unit 3 · Check-in",
+    name: "Canada",
+    color: "#ff6b6b",
+    questions: [
+      {q:"province",a:"Provinz",type:"mc",wrong:["Staat","Region","Bezirk"]},
+      {q:"Arctic",a:"arktisch",type:"mc",wrong:["antarktisch","tropisch","gemäßigt"]},
+      {q:"mineral",a:"Mineral",type:"mc",wrong:["Rohstoff","Metal","Element"]},
+      {q:"countless",a:"unzählige / viele",type:"mc",wrong:["wenige","einige","mehrere"]},
+      {q:"vast",a:"riesig / enorm",type:"mc",wrong:["winzig","klein","begrenzt"]},
+      {q:"species",a:"Art / Spezies",type:"mc",wrong:["Rasse","Sorte","Typ"]},
+      {q:"caribou",a:"Karibu",type:"mc",wrong:["Elch","Rentier","Bison"]},
+      {q:"indigenous",a:"einheimisch / heimisch",type:"mc",wrong:["ausländisch","eingewandert","fremd"]},
+      {q:"multicultural",a:"multikulturell",type:"mc",wrong:["international","global","kosmopolitisch"]},
+      {q:"mosaic",a:"Mosaik",type:"mc",wrong:["Gemälde","Skulptur","Bild"]},
+      {q:"democracy",a:"Demokratie",type:"mc",wrong:["Monarchie","Diktatur","Republik"]},
+      {q:"forestry",a:"Forstwirtschaft",type:"mc",wrong:["Landwirtschaft","Holzwirtschaft","Bergbau"]},
+      {q:"prairie",a:"Prärie",type:"mc",wrong:["Steppe","Savanne","Wüste"]},
+      {q:"in contrast",a:"im Gegensatz dazu",type:"mc",wrong:["ebenso","dagegen","außerdem"]},
+      {q:"density",a:"Dichte",type:"mc",wrong:["Menge","Anzahl","Rate"]},
+      {q:"fur",a:"Fell / Pelz",type:"mc",wrong:["Leder","Wolle","Stoff"]},
+      {q:"beaver",a:"Biber",type:"mc",wrong:["Otter","Marder","Dachs"]},
+    ]
+  },
+  {
+    id: "u3s1",
+    label: "Unit 3 · Station 1",
+    name: "Quebec",
+    color: "#6a9af7",
+    questions: [
+      {q:"provincial",a:"Provinz- / provinziell",type:"mc",wrong:["national","regional","staatlich"]},
+      {q:"route",a:"Strecke / Route",type:"mc",wrong:["Weg","Pfad","Straße"]},
+      {q:"to search for",a:"suchen nach / durchsuchen",type:"mc",wrong:["finden","entdecken","suchen"]},
+      {q:"trading post",a:"Handelsposten",type:"mc",wrong:["Marktplatz","Handelszentrum","Kaufhaus"]},
+      {q:"to hold",a:"abhalten / durchführen",type:"mc",wrong:["planen","besuchen","veranstalten"]},
+      {q:"circus",a:"Zirkus",type:"mc",wrong:["Theater","Kino","Show"]},
+      {q:"artist",a:"Künstler/-in",type:"mc",wrong:["Musiker","Maler","Schauspieler"]},
+      {q:"architecture",a:"Architektur",type:"mc",wrong:["Design","Kunsthandwerk","Stil"]},
+      {q:"fortress",a:"Festung",type:"mc",wrong:["Schloss","Burg","Turm"]},
+      {q:"flora and fauna",a:"Pflanzen- und Tierwelt",type:"mc",wrong:["Natur","Umwelt","Ökosystem"]},
+      {q:"puck",a:"Puck (Eishockey)",type:"mc",wrong:["Ball","Schläger","Tor"]},
+      {q:"stick",a:"Schläger (Hockey)",type:"mc",wrong:["Puck","Tor","Eis"]},
+      {q:"to score",a:"punkten / ein Tor schießen",type:"mc",wrong:["verlieren","passen","schießen"]},
+      {q:"championship",a:"Meisterschaft",type:"mc",wrong:["Turnier","Pokal","Liga"]},
+      {q:"to spread",a:"(sich) verbreiten",type:"mc",wrong:["sammeln","begrenzen","einschränken"]},
+      {q:"architect",a:"Architekt/-in",type:"mc",wrong:["Designer","Ingenieur","Planer"]},
+      {q:"to adopt",a:"annehmen / adoptieren",type:"mc",wrong:["ablehnen","aufgeben","verlassen"]},
+    ]
+  },
+  {
+    id: "u3s2",
+    label: "Unit 3 · Station 2",
+    name: "School experiences in Canada",
+    color: "#6af79a",
+    questions: [
+      {q:"beauty",a:"Schönheit",type:"mc",wrong:["Anmut","Eleganz","Schönheit"]},
+      {q:"to recognize (AE)",a:"erkennen / anerkennen",type:"mc",wrong:["ignorieren","übersehen","vergessen"]},
+      {q:"to raise",a:"anheben / aufziehen",type:"mc",wrong:["senken","erniedrigen","lassen"]},
+      {q:"moccasin",a:"Mokassin",type:"mc",wrong:["Slipper","Sandale","Stiefel"]},
+      {q:"rebellion",a:"Rebellion",type:"mc",wrong:["Aufstand","Revolution","Protest"]},
+      {q:"political",a:"politisch",type:"mc",wrong:["sozial","rechtlich","wirtschaftlich"]},
+      {q:"to issue",a:"herausgeben / ausstellen",type:"mc",wrong:["einziehen","widerrufen","vernichten"]},
+      {q:"to report",a:"berichten / wiedergeben",type:"mc",wrong:["erfinden","erzählen","vermuten"]},
+      {q:"to remove",a:"entfernen",type:"mc",wrong:["hinzufügen","bringen","stellen"]},
+      {q:"to cover",a:"abdecken / bedecken",type:"mc",wrong:["enthüllen","zeigen","offenbaren"]},
+      {q:"bison",a:"Bison / Büffel",type:"mc",wrong:["Caribou","Elch","Büffel"]},
+      {q:"homeschooling",a:"Unterricht zu Hause",type:"mc",wrong:["Fernunterricht","Selbststudium","Privatschule"]},
+      {q:"flexible",a:"flexibel",type:"mc",wrong:["starr","streng","unflexibel"]},
+      {q:"chapter",a:"Kapitel",type:"mc",wrong:["Seite","Teil","Abschnitt"]},
+      {q:"religion",a:"Religion",type:"mc",wrong:["Glaube","Kirche","Gott"]},
+      {q:"to forbid",a:"verbieten",type:"mc",wrong:["erlauben","gestatten","zulassen"]},
+      {q:"punishment",a:"Strafe",type:"mc",wrong:["Belohnung","Konsequenz","Maßnahme"]},
+      {q:"former",a:"ehemalig / früher",type:"mc",wrong:["derzeitig","aktuell","kommend"]},
+      {q:"apology",a:"Entschuldigung",type:"mc",wrong:["Ausrede","Erklärung","Begründung"]},
+      {q:"prime minister",a:"Premierminister/-in",type:"mc",wrong:["Präsident","Kanzler","Gouverneur"]},
+      {q:"support",a:"Unterstützung / Hilfe",type:"mc",wrong:["Widerstand","Kritik","Ablehnung"]},
+      {q:"unfortunately",a:"leider / unglücklicherweise",type:"mc",wrong:["glücklicherweise","zum Glück","hoffentlich"]},
+      {q:"term",a:"Trimester / Semester",type:"mc",wrong:["Schuljahr","Ferien","Monat"]},
+      {q:"dogsled",a:"Hundeschlitten",type:"mc",wrong:["Pferdeschlitten","Schneemobil","Schlitten"]},
+      {q:"to wipe",a:"wischen / abtrocknen",type:"mc",wrong:["waschen","schrubben","putzen"]},
+      {q:"to turn out to be",a:"sich herausstellen als",type:"mc",wrong:["sein","werden","bleiben"]},
+      {q:"thin",a:"dünn",type:"mc",wrong:["dick","schlank","schmal"]},
+    ]
+  },
+  {
+    id: "u3skills",
+    label: "Unit 3 · Skills",
+    name: "Appropriate style",
+    color: "#f7b86a",
+    questions: [
+      {q:"watery",a:"wässrig / dünn",type:"mc",wrong:["cremig","dickflüssig","fließend"]},
+      {q:"to figure out",a:"herausfinden",type:"mc",wrong:["vergessen","verlieren","aufgeben"]},
+      {q:"ahead",a:"vorn / nach vorn",type:"mc",wrong:["hinten","seitlich","oben"]},
+      {q:"steep",a:"steil",type:"mc",wrong:["flach","eben","sanft"]},
+      {q:"to laugh at sb",a:"jmdn. auslachen",type:"mc",wrong:["loben","helfen","grüßen"]},
+      {q:"alongside",a:"neben / entlang",type:"mc",wrong:["gegenüber","hinter","vor"]},
+      {q:"rest",a:"Rast / Ruhe",type:"mc",wrong:["Aktivität","Bewegung","Sport"]},
+      {q:"flat",a:"flach / platt",type:"mc",wrong:["steil","rund","hügelig"]},
+      {q:"to catch one's breath",a:"wieder zu Atem kommen",type:"mc",wrong:["atemlos werden","ausatmen","einatmen"]},
+      {q:"except for",a:"bis auf / außer",type:"mc",wrong:["einschließlich","mit","von"]},
+      {q:"rifle",a:"Gewehr",type:"mc",wrong:["Pistole","Messer","Bogen"]},
+      {q:"lip",a:"Lippe",type:"mc",wrong:["Mund","Kinn","Wange"]},
+      {q:"to slow down",a:"langsamer werden / bremsen",type:"mc",wrong:["beschleunigen","anhalten","weitermachen"]},
+      {q:"shelf / shelves",a:"Regal / Regalbrett",type:"mc",wrong:["Schublade","Schrank","Brett"]},
+      {q:"beyond",a:"jenseits / über ... hinaus",type:"mc",wrong:["unterhalb","vor","neben"]},
+      {q:"porch (AE)",a:"Veranda",type:"mc",wrong:["Balkon","Terrasse","Eingang"]},
+      {q:"chest",a:"Brust / Brustkorb",type:"mc",wrong:["Bauch","Schulter","Rücken"]},
+      {q:"mist",a:"Nebel / Dunst",type:"mc",wrong:["Rauch","Dampf","Wolke"]},
+      {q:"to bother",a:"sich die Mühe machen",type:"mc",wrong:["sich freuen","sich irren","sich beeilen"]},
+      {q:"frankly",a:"ehrlich gesagt",type:"mc",wrong:["leider","hoffentlich","vermutlich"]},
+      {q:"moreover",a:"überdies / außerdem",type:"mc",wrong:["trotzdem","dennoch","nämlich"]},
+      {q:"to refund",a:"zurückerstatten",type:"mc",wrong:["bezahlen","erstatten","zurückgeben"]},
+    ]
+  },
+  {
+    id: "ts2",
+    label: "Text Smart 2",
+    name: "Travel Texts",
+    color: "#6aeaf7",
+    questions: [
+      {q:"shutter",a:"Fensterladen",type:"mc",wrong:["Jalousie","Vorhang","Rolladen"]},
+      {q:"valley",a:"Tal",type:"mc",wrong:["Hügel","Berg","Ebene"]},
+      {q:"sunset",a:"Sonnenuntergang",type:"mc",wrong:["Sonnenaufgang","Dämmerung","Mittag"]},
+      {q:"to fear",a:"(sich) fürchten",type:"mc",wrong:["lieben","mögen","genießen"]},
+      {q:"rough",a:"rau / grob / holprig",type:"mc",wrong:["glatt","eben","sanft"]},
+      {q:"endless",a:"endlos",type:"mc",wrong:["begrenzt","kurz","zeitweise"]},
+      {q:"pine",a:"Kiefer / Pinie",type:"mc",wrong:["Eiche","Tanne","Birke"]},
+      {q:"to educate",a:"erziehen / bilden",type:"mc",wrong:["unterrichten","lernen","lehren"]},
+      {q:"destination",a:"Ziel / Reiseziel",type:"mc",wrong:["Abfahrt","Reise","Ankunft"]},
+      {q:"summit",a:"Gipfel / Berggipfel",type:"mc",wrong:["Tal","Hang","Plateau"]},
+      {q:"to stretch",a:"sich erstrecken / dehnen",type:"mc",wrong:["schrumpfen","zusammenziehen","begrenzen"]},
+      {q:"to run out",a:"ausgehen",type:"mc",wrong:["ankommen","beginnen","aufhören"]},
+      {q:"local",a:"Ortsansässige/-r",type:"mc",wrong:["Tourist","Besucher","Fremder"]},
+      {q:"elk (AE)",a:"Wapiti",type:"mc",wrong:["Elch","Hirsch","Rentier"]},
+      {q:"to feature",a:"eine Hauptrolle spielen / zeigen",type:"mc",wrong:["verbergen","ignorieren","weglassen"]},
+      {q:"dusty",a:"staubig",type:"mc",wrong:["sauber","frisch","nass"]},
+      {q:"historic",a:"historisch",type:"mc",wrong:["alt","antik","mittelalterlich"]},
+      {q:"copper",a:"Kupfer",type:"mc",wrong:["Gold","Silber","Bronze"]},
+      {q:"elegant",a:"elegant",type:"mc",wrong:["modisch","stylisch","schick"]},
+      {q:"cyclist",a:"Radfahrer/-in",type:"mc",wrong:["Motorradfahrer","Fußgänger","Fahrer"]},
+      {q:"partly",a:"teilweise",type:"mc",wrong:["ganz","überhaupt nicht","meistens"]},
+      {q:"mechanic",a:"Mechaniker/-in",type:"mc",wrong:["Ingenieur","Techniker","Handwerker"]},
+      {q:"oily",a:"ölig",type:"mc",wrong:["fettig","nass","klebrig"]},
+      {q:"rich",a:"reichhaltig",type:"mc",wrong:["arm","mager","dünn"]},
+      {q:"dough",a:"Teig",type:"mc",wrong:["Brot","Mehl","Mischung"]},
+      {q:"currency",a:"Währung",type:"mc",wrong:["Münze","Geld","Schein"]},
+      {q:"beard",a:"Bart / Vollbart",type:"mc",wrong:["Schnurrbart","Koteletten","Stoppeln"]},
+      {q:"precious",a:"wertvoll / kostbar",type:"mc",wrong:["teuer","selten","besonders"]},
+      {q:"addicted",a:"süchtig / abhängig",type:"mc",wrong:["begeistert","abhängig","begeistert"]},
+      {q:"apparently",a:"anscheinend",type:"mc",wrong:["offensichtlich","scheinbar","tatsächlich"]},
+      {q:"stall",a:"Stand / Bude",type:"mc",wrong:["Geschäft","Markt","Laden"]},
+      {q:"out of",a:"von (z.B. 3 out of 5)",type:"mc",wrong:["von", "aus","über"]},
+      {q:"striking",a:"bemerkenswert / auffallend",type:"mc",wrong:["gewöhnlich","unauffällig","normal"]},
+    ]
+  },
+  {
+    id: "ac3",
+    label: "Across Cultures 3",
+    name: "What you say and how you say it",
+    color: "#f7e26a",
+    questions: [
+      {q:"schedule (BE)",a:"Stundenplan (amerik.) / Fahrplan",type:"mc",wrong:["Kalender","Programm","Plan"]},
+      {q:"though",a:"doch / jedoch / obwohl",type:"mc",wrong:["weil","wenn","obgleich"]},
+      {q:"so far",a:"bis jetzt",type:"mc",wrong:["bisher","vorhin","bislang"]},
+      {q:"water fountain",a:"Wasserspender",type:"mc",wrong:["Brunnen","Springbrunnen","Wasserhahn"]},
+      {q:"What's up? (infml)",a:"Was ist los?",type:"mc",wrong:["Wie geht's?","Was machst du?","Was hast du?"]},
+      {q:"no more",a:"nicht mehr",type:"mc",wrong:["nie mehr","kein","kaum"]},
+      {q:"auntie (infml)",a:"Tantchen (ugs.)",type:"mc",wrong:["Tante","Oma","Nichte"]},
+      {q:"Same to you.",a:"Danke, gleichfalls.",type:"mc",wrong:["Danke sehr.","Das freut mich.","Gerne."]},
+      {q:"to mind sth",a:"auf etw. aufpassen",type:"mc",wrong:["stören","mögen","ablehnen"]},
+    ]
+  },
+  {
+    id: "f3",
+    label: "Focus 3",
+    name: "People in Power",
+    color: "#f76ae2",
+    questions: [
+      {q:"female",a:"weiblich",type:"mc",wrong:["männlich","neutral","divers"]},
+      {q:"chancellor",a:"Kanzler/-in",type:"mc",wrong:["Präsident","Minister","Gouverneur"]},
+      {q:"throne",a:"Thron",type:"mc",wrong:["Stuhl","Sessel","Podium"]},
+      {q:"head of state",a:"Staatsoberhaupt",type:"mc",wrong:["Regierungschef","Premierminister","Kanzler"]},
+      {q:"to govern",a:"regieren / leiten",type:"mc",wrong:["wählen","verwalten","kontrollieren"]},
+      {q:"head of government",a:"Regierungschef/-in",type:"mc",wrong:["Staatsoberhaupt","Minister","Kanzler"]},
+      {q:"banquet",a:"Bankett",type:"mc",wrong:["Fest","Dinner","Gala"]},
+      {q:"to vote",a:"abstimmen / wählen",type:"mc",wrong:["kandidieren","nominieren","entscheiden"]},
+      {q:"passport",a:"Pass / Reisepass",type:"mc",wrong:["Ausweis","Führerschein","Dokument"]},
+      {q:"Supreme Court",a:"Oberster Gerichtshof",type:"mc",wrong:["Bundesgericht","Strafgericht","Gericht"]},
+      {q:"haunted house",a:"Geisterhaus",type:"mc",wrong:["Spukschloss","Gruselhaus","Hexenhaus"]},
+      {q:"father-in-law",a:"Schwiegervater",type:"mc",wrong:["Stiefvater","Vater","Opa"]},
+      {q:"to curse",a:"fluchen / verfluchen",type:"mc",wrong:["segnen","beten","wünschen"]},
+      {q:"fortune",a:"Vermögen / Reichtum",type:"mc",wrong:["Glück","Schicksal","Zufall"]},
+      {q:"guilty conscience",a:"schlechtes Gewissen",type:"mc",wrong:["Schuldgefühl","Reue","Scham"]},
+      {q:"abroad",a:"im Ausland / ins Ausland",type:"mc",wrong:["daheim","zu Hause","in der Heimat"]},
+    ]
+  },
+];
+
+// ===================== STATE =====================
+let currentSection = null;
+let questions = [];
+let qIndex = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let answered = false;
+
+// ===================== HELPERS =====================
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===================== HOME =====================
+function buildHome() {
+  const grid = document.getElementById('sectionGrid');
+  grid.innerHTML = '';
+  SECTIONS.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.innerHTML = `
+      <div class="sc-left">
+        <span class="sc-label">${s.label}</span>
+        <span class="sc-name">${s.name}</span>
+        <span class="sc-count">${s.questions.length} words</span>
+      </div>
+      <span class="arrow">→</span>
+    `;
+    card.style.borderLeftColor = s.color;
+    card.style.borderLeftWidth = '3px';
+    card.onclick = () => startSection(s.id);
+    grid.appendChild(card);
+  });
+}
+
+function goHome() {
+  showScreen('homeScreen');
+}
+
+// ===================== QUIZ =====================
+function startSection(id) {
+  currentSection = SECTIONS.find(s => s.id === id);
+  questions = shuffle(currentSection.questions);
+  qIndex = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  document.getElementById('quizSectionLabel').textContent = `${currentSection.label} · ${currentSection.name}`;
+  updateStats();
+  showScreen('quizScreen');
+  showQuestion();
+}
+
+function updateStats() {
+  document.getElementById('correctCount').textContent = `✓ ${correctCount}`;
+  document.getElementById('wrongCount').textContent = `✗ ${wrongCount}`;
+  if (document.getElementById('quizCoins')) document.getElementById('quizCoins').textContent = correctCount * 10;
+}
+
+function showQuestion() {
+  answered = false;
+  const q = questions[qIndex];
+  const total = questions.length;
+
+  document.getElementById('progressFill').style.width = `${(qIndex / total) * 100}%`;
+  document.getElementById('questionNum').textContent = `Question ${qIndex + 1} of ${total}`;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  const area = document.getElementById('answersArea');
+  area.innerHTML = '';
+
+  if (q.type === 'mc') {
+    const opts = shuffle([q.a, ...q.wrong.slice(0, 3)]);
+    const grid = document.createElement('div');
+    grid.className = 'options-grid';
+    opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.onclick = () => checkMC(btn, opt, q.a, grid);
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  } else {
+    const wrap = document.createElement('div');
+    wrap.className = 'text-input-wrap';
+    const input = document.createElement('input');
+    input.className = 'text-input';
+    input.placeholder = 'Type your answer...';
+    input.id = 'textAnswer';
+    input.onkeydown = e => { if (e.key === 'Enter') checkText(q.a); };
+    const btn = document.createElement('button');
+    btn.className = 'submit-btn';
+    btn.textContent = 'Check';
+    btn.onclick = () => checkText(q.a);
+    wrap.appendChild(input);
+    wrap.appendChild(btn);
+    area.appendChild(wrap);
+    setTimeout(() => input.focus(), 100);
+  }
+}
+
+function checkMC(btn, chosen, correct, grid) {
+  if (answered) return;
+  answered = true;
+  const allBtns = grid.querySelectorAll('.option-btn');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+  });
+  const isCorrect = chosen === correct;
+  if (!isCorrect) {
+    btn.classList.remove('correct');
+    btn.classList.add('wrong');
+  }
+  showFeedback(isCorrect, correct);
+}
+
+function checkText(correct) {
+  if (answered) return;
+  answered = true;
+  const input = document.getElementById('textAnswer');
+  if (!input) return;
+  const val = input.value.trim().toLowerCase();
+  const isCorrect = val === correct.toLowerCase() || correct.toLowerCase().includes(val) && val.length > 2;
+  input.disabled = true;
+  input.className = 'text-input ' + (isCorrect ? 'correct' : 'wrong');
+  showFeedback(isCorrect, correct);
+}
+
+function showFeedback(isCorrect, correct) {
+  if (isCorrect) {
+    correctCount++;
+    document.getElementById('feedback').textContent = '✓ Correct!';
+    document.getElementById('feedback').className = 'feedback correct show';
+  } else {
+    wrongCount++;
+    document.getElementById('feedback').textContent = `✗ The answer is: ${correct}`;
+    document.getElementById('feedback').className = 'feedback wrong show';
+  }
+  updateStats();
+  document.getElementById('nextBtn').className = 'next-btn show';
+}
+
+function nextQuestion() {
+  qIndex++;
+  if (qIndex >= questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  const total = questions.length;
+  const pct = Math.round((correctCount / total) * 100);
+  let emoji = pct >= 80 ? '🎉' : pct >= 60 ? '👍' : pct >= 40 ? '📚' : '💪';
+  let title = pct >= 80 ? 'Excellent!' : pct >= 60 ? 'Good job!' : pct >= 40 ? 'Keep practicing!' : 'You can do it!';
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = currentSection.name;
+  document.getElementById('resultScore').textContent = pct + '%';
+  document.getElementById('finalCorrect').textContent = correctCount;
+  document.getElementById('finalWrong').textContent = wrongCount;
+  document.getElementById('finalTotal').textContent = total;
+
+  showScreen('resultScreen');
+}
+
+function restartQuiz() {
+  startSection(currentSection.id);
+}
+
+// ===================== INIT =====================
+buildHome();
+</script>
+</body>
+</html>
